@@ -65,13 +65,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2,
 model = SVC(kernel='linear')
 model.fit(X_train, y_train)
 
-# Tkinter GUI setup
-root = tk.Tk()
-root.title("Voice Tone Detector")
-root.geometry("600x400")
-root.iconphoto(True, get_icon_from_base64(ICON_BASE64))
-
-
 # Function to predict the tone of a new audio file
 def predict_tone(audio_path):
     if os.path.exists(audio_path):
@@ -92,13 +85,22 @@ def open_file():
     else:
         messagebox.showwarning("Warning", "No file selected")
 
-
-# Tkinter widgets
-open_button = tk.Button(root, text="Open Audio File", command=open_file)
-open_button.pack(pady=20)
-
+# Tkinter GUI setup
+root = tk.Tk()
+root.title("Voice Tone Detector")
+root.geometry("600x400")
+root.iconphoto(True, get_icon_from_base64(ICON_BASE64))
+menubar = tk.Menu(root)
+file_menu = tk.Menu(menubar, tearoff=0)
+file_menu.add_command(label="Open", command=open_file)
+file_menu.add_command(label="Save")
+file_menu.add_command(label="Save As")
+menubar.add_cascade(label="File", menu=file_menu)
+help_menu = tk.Menu(menubar, tearoff=0)
+help_menu.add_command(label="Help")
+help_menu.add_command(label="Repository")
+menubar.add_cascade(label="Help")
+root.config(menu=menubar)
 result_label = tk.Label(root, text="Predicted Tone: None")
 result_label.pack(pady=20)
-
-# Start the Tkinter main loop
 root.mainloop()
