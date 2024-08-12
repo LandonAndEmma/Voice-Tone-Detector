@@ -3,6 +3,7 @@ import io
 import os
 import pickle
 import tkinter as tk
+import webbrowser
 from tkinter import filedialog, messagebox, simpledialog
 
 import librosa
@@ -16,6 +17,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 
 pygame.mixer.init()
+canvas = None
 ICON_BASE64 = """iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAS1BMVEUAAADvjJS9vb1SSkLm5ube3t7Ozs7vKTrFxcXvvcWcnJzelJTvWmtaUlLeITHv7+/W1ta1tbWtra2lpaX3lJT3WmOtSkr3QkqcOkLJAJcIAAAAAXRSTlMAQObYZgAAAFFJREFUGNOljDcOgEAQA232EpfI4f8vRULao6CD6WZkGd+RAQTZq1spmcxUN6bsKwnFJzNO57M/Nm+tiKpzvlYX5hZSiPH+QaProGhYXgV/uAAQeQHIXWPCWwAAAABJRU5ErkJggg=="""
 
 
@@ -124,10 +126,13 @@ def play_audio(audio_path):
 
 
 def open_file():
+    global canvas
     file_path = filedialog.askopenfilename(filetypes=[("Audio Files", "*.wav")])
     if file_path:
         tone = predict_tone(file_path)
         result_label.config(text=f"Predicted Tone: {tone}")
+        if canvas:
+            canvas.get_tk_widget().destroy()
         fig = plot_waveform(file_path)
         canvas = FigureCanvasTkAgg(fig, master=window)
         canvas.draw()
@@ -157,19 +162,32 @@ def open_file():
             )
 
 
+def open_help():
+    messagebox.showinfo("Help",
+                        "This program allows you to use and train an AI to figure out the tone of vocals\n\n"
+                        "Code: Landon & Emma\n")
+
+
+def open_repository():
+    webbrowser.open_new("https://github.com/LandonAndEmma/Voice-Tone-Detector")
+
+
 window = tk.Tk()
 window.title("Voice Tone Detector")
-window.geometry("600x500")
-window.minsize(275, 100)
 icon = get_icon_from_base64(ICON_BASE64)
 window.iconphoto(False, icon)
+window.geometry("800x301")
+window.minsize(275, 301)
+window.maxsize(800, 301)
+window.resizable(True, False)
+window.attributes('-fullscreen', False)
 menubar = tk.Menu(window)
 file_menu = tk.Menu(menubar, tearoff=0)
 file_menu.add_command(label="Open", command=open_file)
 menubar.add_cascade(label="File", menu=file_menu)
 help_menu = tk.Menu(menubar, tearoff=0)
-help_menu.add_command(label="Help")
-help_menu.add_command(label="Repository")
+help_menu.add_command(label="Help", command=open_help)
+help_menu.add_command(label="Repository", command=open_repository)
 menubar.add_cascade(label="Help", menu=help_menu)
 window.config(menu=menubar)
 result_label = tk.Label(window, text="Predicted Tone: None")
