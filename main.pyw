@@ -1,25 +1,30 @@
-import numpy as np
+import base64
+import io
+import os
+import pickle
+import tkinter as tk
+from tkinter import filedialog, messagebox, simpledialog
+
 import librosa
 import librosa.display
-import base64
-import os
-import io
-import tkinter as tk
-import pygame
 import matplotlib.pyplot as plt
-import pickle
+import numpy as np
+import pygame
 from PIL import Image, ImageTk
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
-from sklearn.preprocessing import LabelEncoder
-from tkinter import filedialog, messagebox, simpledialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import SVC
+
 pygame.mixer.init()
-ICON_BASE64 = """iVBORw0KGgoAAAANSUhEUgAAAIAAAACABAMAAAAxEHz4AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAwUExURQAAAFJKQtYhMWtjY+8pOoR7e/daY5ycnPeMjK2trb29vf+9pc7Ozt7e3u/v7/f396N/qJUAAAABdFJOUwBA5thmAAADMUlEQVR4nO2WT2jTUBzHc3iHOZqyYEQYuELZSTw4POlB0vFadLOUHorMyzyMIchgBy+C8yQelIFKPWQg9LAxGlq8DBF6UeyUjQRWNhmWpN1hIsgGO/Q4re9P+ie1XV6abVXIN4cmTb+fl9/3995LOc6TJ0+ePP0f4o3yQee7oDsAaHPWSf7vceHs9Z1jBnCSVD+zA/AFASlw0B4gcdApgDoh4PCBPm1roIB6EZKEBwdE6ALah9AMQFYIsZOYkSCQ7ELw7xOAMJgiAEiHNu0QcLYpNgPI0KBuBrR+mxp4/dMIqeEyMVvswL6HVoDFTK7s/RxfTL8kgGsprtXO4m8GWM2YxeI3ilmaohCw2Gk7HQBEIVBpGhsAVj8SBYjnJqWWEB0BhFB4srl/jBk2AKFQKNAaojMAhGLFcYbEr6/GcQRIi/WxAWOIVsBgzNoBiclf/v1jbvPK1eRrFEKsPjZpgSOAHA6hFCqWWWxbAogif7V6qH1NTMg34QNR3GqEaDt6KyCZRICykw4ACKPYXz1U19MyAmwJOISmncQZQI7iFB3MYuSHtzQE+GVsP1LXZDmGQhzaZd9J/gIkK6I4tEvMLADsH383U9o36FyaWFhEgMEU6aDEFmEL4C3KYCwlMbyKqH88l8utRInd2H745tvCMgLAAcYOtAVAtBwG8PSTGOyR+9gPTYCuapsjeEHhd6y9vSMAbQqtb/lOgMi95++fTk/BG/MmYX0pTva1oZ3TANACVlAfYWTGBHyZozvrhY2TB/j38uOmHeLlhB5fQcrqHzHg/GPbGtwBeF1V1XxkCtY1plAts9XgFuBTsT7X/KPBYPCiYiWcCkDNm2as4ahOvltXMlrhNAHEP1zrpKFr+Ci0+c98vIC+ZxkCWHtFzZHpu/QGb67pwgkD+p6MXiJxKcoiDCcSiduzlvv+Pc0wNo56ALcADkg+5M6oq4nEHTx3Ukf9+EQAWD71Q/8SsaflFz0BYJ1ZoOsn3S3BNaC/toJnPUDvAV0TXAP8PxV3M8k14B9oA19U3BXhGtBoZO8BPZ+LXc8k1wBaQ7ZcPegZwKcZpf3STrf2YwB48uTJk6de6g9m4hJWGljwVAAAAABJRU5ErkJggg=="""
+ICON_BASE64 = """iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAS1BMVEUAAADvjJS9vb1SSkLm5ube3t7Ozs7vKTrFxcXvvcWcnJzelJTvWmtaUlLeITHv7+/W1ta1tbWtra2lpaX3lJT3WmOtSkr3QkqcOkLJAJcIAAAAAXRSTlMAQObYZgAAAFFJREFUGNOljDcOgEAQA232EpfI4f8vRULao6CD6WZkGd+RAQTZq1spmcxUN6bsKwnFJzNO57M/Nm+tiKpzvlYX5hZSiPH+QaProGhYXgV/uAAQeQHIXWPCWwAAAABJRU5ErkJggg=="""
+
+
 def get_icon_from_base64(base64_string):
     icon_data = base64.b64decode(base64_string)
     icon = Image.open(io.BytesIO(icon_data))
     return ImageTk.PhotoImage(icon)
+
+
 def extract_features(audio_path):
     y, sr = librosa.load(audio_path, sr=None)
     mfccs = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13).T, axis=0)
@@ -27,9 +32,11 @@ def extract_features(audio_path):
     mel = np.mean(librosa.feature.melspectrogram(y=y, sr=sr).T, axis=0)
     contrast = np.mean(librosa.feature.spectral_contrast(y=y, sr=sr).T, axis=0)
     return np.hstack([mfccs, chroma, mel, contrast])
+
+
 def load_or_initialize_model():
     global model, le, X_train, y_train
-    model = SVC(kernel='linear')
+    model = SVC(kernel="linear")
     le = LabelEncoder()
     if os.path.exists("tone_model.pkl") and os.path.exists("label_encoder.pkl"):
         with open("tone_model.pkl", "rb") as f:
@@ -47,8 +54,8 @@ def load_or_initialize_model():
         y_train = np.array([])
     if X_train.size == 0:
         print("No initial training data found. Training with predefined data.")
-        initial_audio_files = ['neutral.wav', 'happy.wav', 'sad.wav', 'mad.wav']
-        initial_labels = ['neutral', 'happy', 'sad', 'mad']
+        initial_audio_files = ["neutral.wav", "happy.wav", "sad.wav", "mad.wav"]
+        initial_labels = ["neutral", "happy", "sad", "mad"]
         data = []
         labels = []
         for audio, label in zip(initial_audio_files, initial_labels):
@@ -70,6 +77,8 @@ def load_or_initialize_model():
                 pickle.dump(le, f)
             np.save("X_train.npy", X_train)
             np.save("y_train.npy", y_train)
+
+
 def predict_tone(audio_path):
     global X_train, y_train
     if os.path.exists(audio_path):
@@ -81,10 +90,14 @@ def predict_tone(audio_path):
         return le.inverse_transform(prediction)[0]
     else:
         return "File not found!"
+
+
 def update_model(audio_path, correct_tone):
     global X_train, y_train
     features = extract_features(audio_path)
-    X_train = np.vstack([X_train, features]) if X_train.size else features.reshape(1, -1)
+    X_train = (
+        np.vstack([X_train, features]) if X_train.size else features.reshape(1, -1)
+    )
     y_train = np.append(y_train, correct_tone)
     le.fit(y_train)
     y_encoded = le.transform(y_train)
@@ -95,15 +108,21 @@ def update_model(audio_path, correct_tone):
         pickle.dump(le, f)
     np.save("X_train.npy", X_train)
     np.save("y_train.npy", y_train)
+
+
 def plot_waveform(audio_path):
     y, sr = librosa.load(audio_path)
     fig, ax = plt.subplots(figsize=(8, 2))
     librosa.display.waveshow(y, sr=sr, ax=ax)
     ax.set_title("Waveform")
     return fig
+
+
 def play_audio(audio_path):
     pygame.mixer.music.load(audio_path)
     pygame.mixer.music.play()
+
+
 def open_file():
     file_path = filedialog.askopenfilename(filetypes=[("Audio Files", "*.wav")])
     if file_path:
@@ -114,24 +133,45 @@ def open_file():
         canvas.draw()
         canvas.get_tk_widget().pack(pady=20)
         play_audio(file_path)
-        response = messagebox.askquestion("Confirm Prediction", f"Is the prediction '{tone}' correct?")
-        if response == 'no':
-            correct_tone = simpledialog.askstring("Correct Tone", "Please enter the correct tone:")
+        response = messagebox.askquestion(
+            "Confirm Prediction", f"Is the prediction '{tone}' correct?"
+        )
+        if response == "no":
+            correct_tone = simpledialog.askstring(
+                "Correct Tone", "Please enter the correct tone:"
+            )
             if correct_tone:
                 update_model(file_path, correct_tone)
-                messagebox.showinfo("Model Updated", "The model has been updated with the correct tone.")
+                messagebox.showinfo(
+                    "Model Updated", "The model has been updated with the correct tone."
+                )
             else:
-                messagebox.showwarning("Input Error", "No correct tone provided. The model was not updated.")
+                messagebox.showwarning(
+                    "Input Error",
+                    "No correct tone provided. The model was not updated.",
+                )
         else:
-            messagebox.showinfo("Confirmation",
-                                "The prediction was confirmed as correct. No updates were made to the model.")
+            messagebox.showinfo(
+                "Confirmation",
+                "The prediction was confirmed as correct. No updates were made to the model.",
+            )
+
+
 window = tk.Tk()
 window.title("Voice Tone Detector")
 window.geometry("600x500")
+window.minsize(275, 100)
 icon = get_icon_from_base64(ICON_BASE64)
 window.iconphoto(False, icon)
-open_button = tk.Button(window, text="Open Audio File", command=open_file)
-open_button.pack(pady=20)
+menubar = tk.Menu(window)
+file_menu = tk.Menu(menubar, tearoff=0)
+file_menu.add_command(label="Open", command=open_file)
+menubar.add_cascade(label="File", menu=file_menu)
+help_menu = tk.Menu(menubar, tearoff=0)
+help_menu.add_command(label="Help")
+help_menu.add_command(label="Repository")
+menubar.add_cascade(label="Help", menu=help_menu)
+window.config(menu=menubar)
 result_label = tk.Label(window, text="Predicted Tone: None")
 result_label.pack(pady=20)
 load_or_initialize_model()
