@@ -198,9 +198,16 @@ def open_repository():
 
 # Function to handle the window close event
 def on_closing():
-    # Perform any cleanup here if necessary (e.g., stopping audio playback)
-    pygame.mixer.music.stop()  # Stop any playing audio
-    window.destroy()  # Close the window and stop the Tkinter main loop
+    # Stop any playing audio
+    if pygame.mixer.music.get_busy():  # Check if any audio is playing
+        pygame.mixer.music.stop()  # Stop the audio
+    # Destroy the plot canvas if it exists
+    global canvas
+    if canvas:
+        canvas.get_tk_widget().destroy()  # Destroy the canvas widget
+    # Close the window and stop the Tkinter main loop
+    window.destroy()
+    window.quit()  # Quit the Tkinter main loop
 
 
 # Create the main Tkinter window
