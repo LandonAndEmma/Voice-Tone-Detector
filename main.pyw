@@ -68,7 +68,7 @@ def load_or_initialize_model():
         y_train = np.array([])
     # If there is no training data, train the model with predefined data
     if X_train.size == 0:
-        print("No initial training data found. Training with predefined data.")
+        messagebox.showinfo("Info", "No initial training data found. Training with predefined data.")
         initial_audio_files = ["neutral.wav", "happy.wav", "sad.wav", "mad.wav"]  # Predefined audio files
         initial_labels = ["neutral", "happy", "sad", "mad"]  # Corresponding labels
         data = []
@@ -79,7 +79,7 @@ def load_or_initialize_model():
                 data.append(features)  # Add the features to the data list
                 labels.append(label)  # Add the corresponding label to the labels list
             else:
-                print(f"File {audio} not found!")
+                messagebox.showinfo("Error", f"File {audio} not found!")
         if data:
             X_train = np.array(data)  # Convert the data list to a NumPy array
             y_train = np.array(labels)  # Convert the labels list to a NumPy array
